@@ -1,98 +1,91 @@
-from queue import PriorityQueue
 import uuid 
+from datetime import datetime 
+from enum import Enum
+from queue import PriorityQueue
+from threading import RLock
 
+class Status(Enum):
+    TO_DO = 1
+    IN_PROGRESS = 2
+    DONE = 3
+    FAIL = 4
 
-
-class Task: 
-
-    def __init__(self, user_id, priority, metadata={}):
-        self.id = str(uuid.uuid4())
-        self.user_id = user_id
-        self.priority = priority 
-        self.metadata = metadata
-        self.version = 0
-
-
-
-class TaskManager : 
+class BaseTimeStamp:
 
     def __init__(self):
-        self.pq = PriorityQueue()
-        self.task_finder = {}
-        '''
-        task_finder = {key : (timestamp, task)}
-        '''
-    
-    def add_task(self, task):
-        if task is None:
-            # using print for logging
-            print('Task not defined !')
-            return False 
-        if task.id in self.task_finder:
-            print(f'task {task.id} already present in Queue!')
-            return task 
-        # this part should be atomic 
-        self.task_finder[task.id] = (task, task.version)
-        self.pq.put((-task.priority, -task.version, task.id, task))
-        print(f'Task {task.id} added to queue successfully')
-        return task
-    
-    def modify_task(self, task_id, new_priority):
-        if new_priority is None:
-            print("Priority cannot be None ")
+        self.id = uuid.uuid4()
+        self.created_at = datetime.now()
 
-        if task_id not in self.task_finder:
-            print('Task not present in queue')
-            return False 
+    
+class User(BaseTimeStamp) :
+
+    def __init__(self,name):
+        super().__init__()
+        self.name = name
+
+class Comments(BaseTimeStamp):
+
+    def __init__(self, text=''):
+        super().__init__()
+        self.text = text 
+    
+
+
+class Task(BaseTimeStamp):
+
+    def __init__(self, user, priority, title, description):
+        super().__init__()
+        self.title = title
+        self.description = description 
+
+        self.status = Status.TO_DO
+        self.priority = priority 
+        self.user = user 
+        self.comments = []
+        self.history = []
+    
+
+    def add_comment(self, comment):
+        if not comment:
+            return 
         
-        task, version = self.task_finder[task_id]
-        version+=1
-        task.priority = new_priority
-        task.version = version
-        self.task_finder[task_id] = task , task.version
-        print(f'Task details, version:{task.version}, priority: {task.priority}, user : {task.user_id}')
-        self.pq.put((-task.priority, -task.version ,task.id, task))
-        print(f'Update successfull for task {task.id}')
-        return task
-    
-    def remove_task(self, task_id):
-        if task_id not in self.task_finder:
-            print('Task not present in queue')
-            return False 
-        del self.task_finder[task_id]
-        print(f'Task with {task_id} deleted!')
-        return True
+        self.comments.append(comment)
+        return 
 
-    def execute_task(self):
-        # this should be atomic 
 
-        while not self.pq.empty():
-            _ , version , task_id , task = self.pq.get()
-            if task_id  in self.task_finder:
-                task, latest_version = self.task_finder[task_id] 
+class ActivityLog(BaseTimeStamp):
 
-                if -version != latest_version:
-                    continue
-
-                del self.task_finder[task_id]
-                print(f'Task {task.user_id} executed for task id {task_id} with priority {task.priority} {task.version}')
+    def __init__(self, action, user):
+        super().__init__()
+        self.user = user 
+        self.action = action
         
+
+
+class TaskManager:
+
+    def __init__(self):
+        self.id = uuid.uuid4()
+        self.task_map = {}
+        self.queue = PriorityQueue()
+        self.lock = RLock()
+
+
+
+    def add_tasks(self, task):
+        return 
+
+    def update_tasks(self, task_id):
+        return 
     
+    def delete_tasks(self, task_id):
+        return 
+         
+    def history(self, task_id):
+        return 
 
-    def view_tasks(self):
-        return [(self.task_finder[task][0].id, self.task_finder[task][0].priority) for task in self.task_finder]
-
-
-t1 = Task('A', 2)
-t2 = Task('B', 3)
-t3 = Task('C', 4)
-
-
-tm = TaskManager()
-tm.add_task(t1)
-tm.add_task(t2)
-tm.add_task(t3)
-tm.modify_task(task_id= t3.id, new_priority=1)
-print(tm.view_tasks())
-tm.execute_task()
-        
+    def change_user(self, to_user):
+        return 
+    
+    def filter_tasks(self, filter):
+        return 
